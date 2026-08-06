@@ -21,23 +21,18 @@ func DB(fireApp FireApp, ctx context.Context) (*FireDB, error) {
 
 func (f FireDB) CreateURL(u URL, ctx context.Context) error {
 	_, err := f.Collection("urls").Doc(u.ShortCode).Set(ctx, u)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (f FireDB) DeleteURL(u URL, ctx context.Context) error {
 	_, err := f.Collection("urls").Doc(u.ShortCode).Delete(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
-// TODO :: Update function.
+func (f FireDB) UpdateURL(n URL, oldShortCode string, ctx context.Context) error {
+	_, err := f.Collection("urls").Doc(oldShortCode).Set(ctx, n, firestore.MergeAll)
+	return err
+}
 
 func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*URL, error) {
 	var url URL
