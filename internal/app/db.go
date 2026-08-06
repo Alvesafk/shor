@@ -18,3 +18,38 @@ func DB(fireApp FireApp, ctx context.Context) (*FireDB, error) {
 
 	return &FireDB{fireDB}, nil
 }
+
+func (f FireDB) CreateURL(u URL, ctx context.Context) error {
+	_, err := f.Collection("urls").Doc(u.ShortCode).Set(ctx, u)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f FireDB) DeleteURL(u URL, ctx context.Context) error {
+	_, err := f.Collection("urls").Doc(u.ShortCode).Delete(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TODO :: Update function.
+
+func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*URL, error) {
+	var url URL
+	doc, err := f.Collection("urls").Doc(shortCode).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = doc.DataTo(&url)
+	if err != nil {
+		return nil, err
+	}
+
+	return &url, nil
+}
