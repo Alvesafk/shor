@@ -39,14 +39,23 @@ func (f FireDB) DeleteURL(u models.URL, ctx context.Context) error {
 	return err
 }
 
-func (f FireDB) UpdateURL(n models.URL, oldShortCode string, ctx context.Context) error {
+func (f FireDB) UpdateURL(url, shortCode string, ctx context.Context) (*models.URL, error) {
 	update := []firestore.Update{
-		{Path: "URL", Value: n.URL},
+		{Path: "URL", Value: url},
 		{Path: "UpdatedAt", Value: time.Now()},
 	}
 
-	_, err := f.Collection("urls").Doc(oldShortCode).Update(ctx, update)
-	return err
+	_, err := f.Collection("urls").Doc(shortCode).Update(ctx, update)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := f.GetURLByShortCode(shortCode, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*models.URL, error) {

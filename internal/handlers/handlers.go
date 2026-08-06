@@ -177,3 +177,72 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 		Content: url,
 	}.WriteJSON(w, http.StatusOK)
 }
+
+func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
+	shortUrlString := r.PathValue("shortUrl")
+	if shortUrlString == "" {
+		Response{
+			Message: "invalid json request",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
+	}
+
+	exist, err := c.db.ShortURLExists(shortUrlString, c.ctx)
+	if err != nil {
+		if errors.Is(err, app.UrlNotFound) {
+			Response{
+				Message: "url not found",
+				Status:  "failed",
+			}.WriteJSON(w, http.StatusNotFound)
+
+			return
+		}
+
+		Response{
+			Message: "could not find url",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	if !exist {
+		Response{
+			Message: "short url does not exist",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+	}
+
+	var u struct {
+		Url string `json:"url"`
+	}
+
+	defer r.Body.Close()
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&u); err != nil || u.Url == "" {
+		Response{
+			Message: "invalid json request",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
+	}
+
+	url, err := c.db.UpdateURL(u.Url, shortUrlString, c.ctx)
+	if err != nil {
+		Response{
+			Message: "could not update url",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	Response{
+		Message: "success",
+		Status:  "ok",
+		Content: url,
+	}.WriteJSON(w, http.StatusOK)
+}
