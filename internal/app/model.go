@@ -8,12 +8,12 @@ import (
 )
 
 type URL struct {
-	ID          uuid.UUID `json:"id"`
+	ID          string    `json:"id"`
 	URL         string    `json:"url"`
 	ShortCode   string    `json:"short_code"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-	AccessCount int      `json:"access_count"`
+	AccessCount int       `json:"access_count"`
 }
 
 func GenURLStruct(url, shortCode string) *URL {
@@ -26,7 +26,7 @@ func GenURLStruct(url, shortCode string) *URL {
 	id := uuid.New()
 
 	r := URL{
-		ID:          id,
+		ID:          id.String(),
 		URL:         url,
 		ShortCode:   shortCode,
 		CreatedAt:   time.Now(),
