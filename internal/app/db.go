@@ -2,11 +2,17 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"cloud.google.com/go/firestore"
 	"github.com/Alvesafk/shor/internal/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+var (
+	UrlNotFound = errors.New("not found")
 )
 
 type FireDB struct {
@@ -41,6 +47,10 @@ func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*model
 	var url models.URL
 	doc, err := f.Collection("urls").Doc(shortCode).Get(ctx)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, fmt.Errorf("not found")
+		}
+
 		return nil, err
 	}
 
@@ -57,7 +67,7 @@ func (f FireDB) ShortURLExists(shortCode string, ctx context.Context) (bool, err
 	_, err := f.GetURLByShortCode(shortCode, ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return false, nil
+			return false, UrlNotFound
 		}
 
 		return false, err
