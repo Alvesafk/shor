@@ -13,7 +13,7 @@ type URL struct {
 	ShortCode   string    `json:"short_code"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-	AccessCount uint      `json:"access_count"`
+	AccessCount int      `json:"access_count"`
 }
 
 func GenURLStruct(url, shortCode string) *URL {
