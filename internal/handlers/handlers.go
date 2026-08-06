@@ -54,6 +54,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 		Url string `json:"url"`
 	}
 
+	defer r.Body.Close()
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&u); err != nil || u.Url == "" {
 		Response{
@@ -63,7 +64,26 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	defer r.Body.Close()
+
+	url, alreadyRegistered, err := c.db.URLAlreadyRegistered(u.Url, c.ctx)
+	if err != nil {
+		Response{
+			Message: "error on checking if url is already registered",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	if alreadyRegistered {
+		Response{
+			Message: "url already registered",
+			Status:  "failed",
+			Content: url,
+		}.WriteJSON(w, http.StatusConflict)
+
+		return
+	}
 
 	shortCode, err := generateShortURL()
 	if err != nil {
@@ -75,7 +95,19 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for exist, err := c.db.ShortURLExists(shortCode, c.ctx); err == nil && exist; {
+	for {
+		exist, err := c.db.ShortURLExists(shortCode, c.ctx)
+		if err != nil {
+			Response{
+				Message: "error on checking short code",
+				Status:  "failed",
+			}.WriteJSON(w, http.StatusInternalServerError)
+		}
+
+		if !exist {
+			break
+		}
+
 		shortCode, err = generateShortURL()
 		if err != nil {
 			Response{
@@ -87,7 +119,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	url := models.GenURLStruct(u.Url, shortCode)
+	url = models.GenURLStruct(u.Url, shortCode)
 
 	err = c.db.CreateURL(*url, c.ctx)
 	if err != nil {
@@ -95,6 +127,8 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 			Message: "error on creating db entry",
 			Status:  "failed",
 		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
 	}
 
 	Response{

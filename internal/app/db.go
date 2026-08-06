@@ -48,6 +48,7 @@ func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*model
 	if err != nil {
 		return nil, err
 	}
+	url.ID = doc.Ref.ID
 
 	return &url, nil
 }
@@ -63,4 +64,26 @@ func (f FireDB) ShortURLExists(shortCode string, ctx context.Context) (bool, err
 	}
 
 	return true, nil
+}
+
+func (f FireDB) URLAlreadyRegistered(urlString string, ctx context.Context) (*models.URL, bool, error) {
+	docs, err := f.Collection("urls").
+		Where("URL", "==", urlString).
+		Limit(1).
+		Documents(ctx).GetAll()
+	if err != nil {
+		return nil, false, err
+	}
+
+	if len(docs) > 0 {
+		var url models.URL
+		if err := docs[0].DataTo(&url); err != nil {
+			return nil, false, err
+		}
+
+		url.ID = docs[0].Ref.ID
+		return &url, true, nil
+	}
+
+	return nil, false, nil
 }
