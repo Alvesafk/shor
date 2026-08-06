@@ -1,4 +1,4 @@
-package db
+package app
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type FireApp struct {
 	*firebase.App
 }
 
-func Connect() (*FireApp, error) {
+func New() (*FireApp, error) {
 	if err := godotenv.Load(); err != nil {
 		return nil, err
 	}

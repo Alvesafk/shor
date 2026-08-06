@@ -4,18 +4,20 @@ import (
 	"context"
 	"log"
 
-	"github.com/Alvesafk/shor/internal/db"
+	"github.com/Alvesafk/shor/internal/app"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/middleware"
 )
 
 func main() {
 	ctx := context.Background()
 
-	fireApp, err := db.Connect()
+	fireApp, err := app.New()
 	if err != nil {
 		log.Fatal("error: ", err)
 	}
 
-	fireDB, err := fireApp.Firestore(ctx)
+	fireDB, err := app.DB(*fireApp, ctx)
 	if err != nil {
 		log.Fatal("error: ", err)
 	}
@@ -24,4 +26,9 @@ func main() {
 		"hello":  "World",
 		"world": "Hello",
 	})
+
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 }
