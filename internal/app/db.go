@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/Alvesafk/shor/internal/models"
@@ -39,7 +40,12 @@ func (f FireDB) DeleteURL(u models.URL, ctx context.Context) error {
 }
 
 func (f FireDB) UpdateURL(n models.URL, oldShortCode string, ctx context.Context) error {
-	_, err := f.Collection("urls").Doc(oldShortCode).Set(ctx, n, firestore.MergeAll)
+	update := []firestore.Update{
+		{Path: "URL", Value: n.URL},
+		{Path: "UpdatedAt", Value: time.Now()},
+	}
+
+	_, err := f.Collection("urls").Doc(oldShortCode).Update(ctx, update)
 	return err
 }
 
