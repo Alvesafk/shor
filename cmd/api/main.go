@@ -45,7 +45,9 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", conn.GetHelloWorld)
+
 	r.Post("/shor", conn.PostURL)
+	r.Get("/shor/{shortUrl}", conn.GetURL)
 
 	server := &http.Server{
 		Addr:         serverPort,

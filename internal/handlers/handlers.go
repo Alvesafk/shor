@@ -3,15 +3,18 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/Alvesafk/shor/internal/app"
 	"github.com/Alvesafk/shor/internal/models"
 )
 
+// TODO: use a constant for Status field on the Response struct.
+
 type Connection struct {
 	db  *app.FireDB
-	ctx context.Context
+	ctx context.Context // TODO: drop ctx field on connection struct for context of the request
 }
 
 func NewConnection(db *app.FireDB, ctx context.Context) *Connection {
@@ -125,6 +128,43 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Response{
 			Message: "error on creating db entry",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	Response{
+		Message: "success",
+		Status:  "ok",
+		Content: url,
+	}.WriteJSON(w, http.StatusOK)
+}
+
+func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
+	shortUrlString := r.PathValue("shortUrl")
+	if shortUrlString == "" {
+		Response{
+			Message: "invalid json request",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
+	}
+
+	url, err := c.db.GetURLByShortCode(shortUrlString, c.ctx)
+	if err != nil {
+		if errors.Is(err, app.UrlNotFound) {
+			Response{
+				Message: "url was not found",
+				Status:  "failed",
+			}.WriteJSON(w, http.StatusNotFound)
+
+			return
+		}
+
+		Response{
+			Message: "could not find url",
 			Status:  "failed",
 		}.WriteJSON(w, http.StatusInternalServerError)
 
