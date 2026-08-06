@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cloud.google.com/go/firestore"
+	"github.com/Alvesafk/shor/internal/models"
 )
 
 type FireDB struct {
@@ -19,23 +20,23 @@ func DB(fireApp FireApp, ctx context.Context) (*FireDB, error) {
 	return &FireDB{fireDB}, nil
 }
 
-func (f FireDB) CreateURL(u URL, ctx context.Context) error {
+func (f FireDB) CreateURL(u models.URL, ctx context.Context) error {
 	_, err := f.Collection("urls").Doc(u.ShortCode).Set(ctx, u)
 	return err
 }
 
-func (f FireDB) DeleteURL(u URL, ctx context.Context) error {
+func (f FireDB) DeleteURL(u models.URL, ctx context.Context) error {
 	_, err := f.Collection("urls").Doc(u.ShortCode).Delete(ctx)
 	return err
 }
 
-func (f FireDB) UpdateURL(n URL, oldShortCode string, ctx context.Context) error {
+func (f FireDB) UpdateURL(n models.URL, oldShortCode string, ctx context.Context) error {
 	_, err := f.Collection("urls").Doc(oldShortCode).Set(ctx, n, firestore.MergeAll)
 	return err
 }
 
-func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*URL, error) {
-	var url URL
+func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*models.URL, error) {
+	var url models.URL
 	doc, err := f.Collection("urls").Doc(shortCode).Get(ctx)
 	if err != nil {
 		return nil, err
