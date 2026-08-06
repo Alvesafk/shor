@@ -11,6 +11,7 @@ import (
 )
 
 // TODO: use a constant for Status field on the Response struct.
+// TODO: make a validate function to validate if an shortURL exists in the db.
 
 type Connection struct {
 	db  *app.FireDB
@@ -213,6 +214,8 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 			Message: "short url does not exist",
 			Status:  "failed",
 		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
 	}
 
 	var u struct {
@@ -245,4 +248,58 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 		Status:  "ok",
 		Content: url,
 	}.WriteJSON(w, http.StatusOK)
+}
+
+func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
+	shortUrlString := r.PathValue("shortUrl")
+	if shortUrlString == "" {
+		Response{
+			Message: "invalid json request",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
+	}
+
+	exist, err := c.db.ShortURLExists(shortUrlString, c.ctx)
+	if err != nil {
+		if errors.Is(err, app.UrlNotFound) {
+			Response{
+				Message: "url not found",
+				Status:  "failed",
+			}.WriteJSON(w, http.StatusNotFound)
+
+			return
+		}
+
+		Response{
+			Message: "could not find url",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	if !exist {
+		Response{
+			Message: "short url does not exist",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
+	}
+
+	if err := c.db.DeleteURL(shortUrlString, c.ctx); err != nil {
+		Response{
+			Message: "could not delete the url",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	Response{
+		Message: "success",
+		Status:  "ok",
+	}.WriteJSON(w, http.StatusNoContent)
 }

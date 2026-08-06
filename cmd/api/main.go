@@ -49,6 +49,7 @@ func main() {
 	r.Post("/shor", conn.PostURL)
 	r.Get("/shor/{shortUrl}", conn.GetURL)
 	r.Put("/shor/{shortUrl}", conn.UpdateURL)
+	r.Delete("/shor/{shortUrl}", conn.DeleteURL)
 
 	server := &http.Server{
 		Addr:         serverPort,

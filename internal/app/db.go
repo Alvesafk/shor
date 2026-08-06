@@ -34,8 +34,8 @@ func (f FireDB) CreateURL(u models.URL, ctx context.Context) error {
 	return err
 }
 
-func (f FireDB) DeleteURL(u models.URL, ctx context.Context) error {
-	_, err := f.Collection("urls").Doc(u.ShortCode).Delete(ctx)
+func (f FireDB) DeleteURL(shortCode string, ctx context.Context) error {
+	_, err := f.Collection("urls").Doc(shortCode).Delete(ctx)
 	return err
 }
 
