@@ -106,6 +106,8 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 				Message: "error on checking short code",
 				Status:  "failed",
 			}.WriteJSON(w, http.StatusInternalServerError)
+
+			return
 		}
 
 		if !exist {
