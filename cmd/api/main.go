@@ -32,12 +32,13 @@ func main() {
 		log.Fatal("error: ", err)
 	}
 
-	conn := handlers.NewConnection(fireDB)
+	conn := handlers.NewConnection(fireDB, ctx)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", conn.GetHelloWorld)
+	r.Post("/shor", conn.PostURL)
 
 	fmt.Println("Server listening on port", serverPort)
 	http.ListenAndServe(serverPort, r)

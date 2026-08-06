@@ -1,18 +1,21 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/Alvesafk/shor/internal/app"
+	"github.com/Alvesafk/shor/internal/models"
 )
 
 type Connection struct {
-	db *app.FireDB
+	db  *app.FireDB
+	ctx context.Context
 }
 
-func NewConnection(db *app.FireDB) *Connection {
-	return &Connection{db}
+func NewConnection(db *app.FireDB, ctx context.Context) *Connection {
+	return &Connection{db, ctx}
 }
 
 type Response struct {
@@ -34,5 +37,69 @@ func (c Connection) GetHelloWorld(w http.ResponseWriter, r *http.Request) {
 		Message: "This is a Hello, World!",
 		Status:  "ok",
 		Content: "Hello, World!",
+	}.WriteJSON(w, http.StatusOK)
+}
+
+func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		Response{
+			Message: "method not allowed",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusMethodNotAllowed)
+
+		return
+	}
+
+	var u struct {
+		Url string `json:"url"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&u); err != nil || u.Url == "" {
+		Response{
+			Message: "invalid json request",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusBadRequest)
+
+		return
+	}
+	defer r.Body.Close()
+
+	shortCode, err := generateShortURL()
+	if err != nil {
+		Response{
+			Message: "error on generating short code",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
+	for exist, err := c.db.ShortURLExists(shortCode, c.ctx); err == nil && exist; {
+		shortCode, err = generateShortURL()
+		if err != nil {
+			Response{
+				Message: "error on generating short code",
+				Status:  "failed",
+			}.WriteJSON(w, http.StatusInternalServerError)
+
+			return
+		}
+	}
+
+	url := models.GenURLStruct(u.Url, shortCode)
+
+	err = c.db.CreateURL(*url, c.ctx)
+	if err != nil {
+		Response{
+			Message: "error on creating db entry",
+			Status:  "failed",
+		}.WriteJSON(w, http.StatusInternalServerError)
+	}
+
+	Response{
+		Message: "success",
+		Status:  "ok",
+		Content: url,
 	}.WriteJSON(w, http.StatusOK)
 }
