@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -19,11 +18,11 @@ const (
 
 type Connection struct {
 	db  *app.FireDB
-	ctx context.Context // TODO: drop ctx field on connection struct for context of the request
+	// TODO: drop ctx field on connection struct for context of the request
 }
 
-func NewConnection(db *app.FireDB, ctx context.Context) *Connection {
-	return &Connection{db, ctx}
+func NewConnection(db *app.FireDB) *Connection {
+	return &Connection{db}
 }
 
 type Response struct {
@@ -73,7 +72,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, alreadyRegistered, err := c.db.URLAlreadyRegistered(u.Url, c.ctx)
+	url, alreadyRegistered, err := c.db.URLAlreadyRegistered(u.Url, r.Context())
 	if err != nil {
 		Response{
 			Message: "error on checking if url is already registered",
@@ -104,7 +103,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for {
-		exist, err := c.db.ShortURLExists(shortCode, c.ctx)
+		exist, err := c.db.ShortURLExists(shortCode, r.Context())
 		if err != nil {
 			Response{
 				Message: "error on checking short code",
@@ -131,7 +130,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 
 	url = models.GenURLStruct(u.Url, shortCode)
 
-	err = c.db.CreateURL(*url, c.ctx)
+	err = c.db.CreateURL(*url, r.Context())
 	if err != nil {
 		Response{
 			Message: "error on creating db entry",
@@ -159,7 +158,7 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := c.db.GetURLByShortCode(shortUrlString, c.ctx)
+	url, err := c.db.GetURLByShortCode(shortUrlString, r.Context())
 	if err != nil {
 		if errors.Is(err, app.UrlNotFound) {
 			Response{
@@ -196,7 +195,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exist, err := c.db.ShortURLExists(shortUrlString, c.ctx)
+	exist, err := c.db.ShortURLExists(shortUrlString, r.Context())
 	if err != nil {
 		if errors.Is(err, app.UrlNotFound) {
 			Response{
@@ -239,7 +238,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := c.db.UpdateURL(u.Url, shortUrlString, c.ctx)
+	url, err := c.db.UpdateURL(u.Url, shortUrlString, r.Context())
 	if err != nil {
 		Response{
 			Message: "could not update url",
@@ -267,7 +266,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exist, err := c.db.ShortURLExists(shortUrlString, c.ctx)
+	exist, err := c.db.ShortURLExists(shortUrlString, r.Context())
 	if err != nil {
 		if errors.Is(err, app.UrlNotFound) {
 			Response{
@@ -295,7 +294,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := c.db.DeleteURL(shortUrlString, c.ctx); err != nil {
+	if err := c.db.DeleteURL(shortUrlString, r.Context()); err != nil {
 		Response{
 			Message: "could not delete the url",
 			Status:  fail,

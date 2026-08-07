@@ -39,7 +39,7 @@ func main() {
 	}
 	log.Println("Connected.")
 
-	conn := handlers.NewConnection(fireDB, ctx)
+	conn := handlers.NewConnection(fireDB)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
