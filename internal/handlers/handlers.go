@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -14,11 +15,13 @@ const (
 	fail = "failed"
 )
 
-// TODO: make a validate function to validate if an shortURL exists in the db.
+var (
+	errEmptyString = errors.New("the passed string is empty")
+	errNotFound    = errors.New("the content was not found")
+)
 
 type Connection struct {
-	db  *app.FireDB
-	// TODO: drop ctx field on connection struct for context of the request
+	db *app.FireDB
 }
 
 func NewConnection(db *app.FireDB) *Connection {
@@ -149,26 +152,15 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 
 func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 	shortUrlString := r.PathValue("shortUrl")
-	if shortUrlString == "" {
-		Response{
-			Message: "invalid json request",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusBadRequest)
+	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
+	if err != nil {
+		res.WriteJSON(w, code)
 
 		return
 	}
 
 	url, err := c.db.GetURLByShortCode(shortUrlString, r.Context())
 	if err != nil {
-		if errors.Is(err, app.UrlNotFound) {
-			Response{
-				Message: "url was not found",
-				Status:  fail,
-			}.WriteJSON(w, http.StatusNotFound)
-
-			return
-		}
-
 		Response{
 			Message: "could not find url",
 			Status:  fail,
@@ -186,39 +178,9 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 
 func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 	shortUrlString := r.PathValue("shortUrl")
-	if shortUrlString == "" {
-		Response{
-			Message: "invalid json request",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusBadRequest)
-
-		return
-	}
-
-	exist, err := c.db.ShortURLExists(shortUrlString, r.Context())
+	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
 	if err != nil {
-		if errors.Is(err, app.UrlNotFound) {
-			Response{
-				Message: "url not found",
-				Status:  fail,
-			}.WriteJSON(w, http.StatusNotFound)
-
-			return
-		}
-
-		Response{
-			Message: "could not find url",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusInternalServerError)
-
-		return
-	}
-
-	if !exist {
-		Response{
-			Message: "short url does not exist",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusBadRequest)
+		res.WriteJSON(w, code)
 
 		return
 	}
@@ -257,39 +219,9 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 
 func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	shortUrlString := r.PathValue("shortUrl")
-	if shortUrlString == "" {
-		Response{
-			Message: "invalid json request",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusBadRequest)
-
-		return
-	}
-
-	exist, err := c.db.ShortURLExists(shortUrlString, r.Context())
+	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
 	if err != nil {
-		if errors.Is(err, app.UrlNotFound) {
-			Response{
-				Message: "url not found",
-				Status:  fail,
-			}.WriteJSON(w, http.StatusNotFound)
-
-			return
-		}
-
-		Response{
-			Message: "could not find url",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusInternalServerError)
-
-		return
-	}
-
-	if !exist {
-		Response{
-			Message: "short url does not exist",
-			Status:  fail,
-		}.WriteJSON(w, http.StatusBadRequest)
+		res.WriteJSON(w, code)
 
 		return
 	}
@@ -307,4 +239,25 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 		Message: "success",
 		Status:  ok,
 	}.WriteJSON(w, http.StatusNoContent)
+}
+
+func ValidateShortURL(shortURL string, c Connection, ctx context.Context) (*Response, int, error) {
+	if shortURL == "" {
+		return &Response{Message: "invalid json request", Status: fail}, http.StatusBadRequest, errEmptyString
+	}
+
+	exist, err := c.db.ShortURLExists(shortURL, ctx)
+	if err != nil {
+		if errors.Is(err, app.UrlNotFound) {
+			return &Response{Message: "url not found", Status: fail}, http.StatusNotFound, app.UrlNotFound
+		}
+
+		return &Response{Message: "could not find url", Status: fail}, http.StatusInternalServerError, errNotFound
+	}
+
+	if !exist {
+		return &Response{Message: "short url does not exist", Status: fail}, http.StatusBadRequest, errNotFound
+	}
+
+	return nil, http.StatusOK, nil
 }
