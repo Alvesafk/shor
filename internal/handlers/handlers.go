@@ -10,7 +10,11 @@ import (
 	"github.com/Alvesafk/shor/internal/models"
 )
 
-// TODO: use a constant for Status field on the Response struct.
+const (
+	ok   = "ok"
+	fail = "failed"
+)
+
 // TODO: make a validate function to validate if an shortURL exists in the db.
 
 type Connection struct {
@@ -39,7 +43,7 @@ func (r Response) WriteJSON(w http.ResponseWriter, h int) {
 func (c Connection) GetHelloWorld(w http.ResponseWriter, r *http.Request) {
 	Response{
 		Message: "This is a Hello, World!",
-		Status:  "ok",
+		Status:  ok,
 		Content: "Hello, World!",
 	}.WriteJSON(w, http.StatusOK)
 }
@@ -48,7 +52,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		Response{
 			Message: "method not allowed",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusMethodNotAllowed)
 
 		return
@@ -63,7 +67,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if err := decoder.Decode(&u); err != nil || u.Url == "" {
 		Response{
 			Message: "invalid json request",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -73,7 +77,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Response{
 			Message: "error on checking if url is already registered",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -82,7 +86,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if alreadyRegistered {
 		Response{
 			Message: "url already registered",
-			Status:  "failed",
+			Status:  fail,
 			Content: url,
 		}.WriteJSON(w, http.StatusConflict)
 
@@ -93,7 +97,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Response{
 			Message: "error on generating short code",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -104,7 +108,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			Response{
 				Message: "error on checking short code",
-				Status:  "failed",
+				Status:  fail,
 			}.WriteJSON(w, http.StatusInternalServerError)
 
 			return
@@ -118,7 +122,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			Response{
 				Message: "error on generating short code",
-				Status:  "failed",
+				Status:  fail,
 			}.WriteJSON(w, http.StatusInternalServerError)
 
 			return
@@ -131,7 +135,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Response{
 			Message: "error on creating db entry",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -139,7 +143,7 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 
 	Response{
 		Message: "success",
-		Status:  "ok",
+		Status:  ok,
 		Content: url,
 	}.WriteJSON(w, http.StatusOK)
 }
@@ -149,7 +153,7 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 	if shortUrlString == "" {
 		Response{
 			Message: "invalid json request",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -160,7 +164,7 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, app.UrlNotFound) {
 			Response{
 				Message: "url was not found",
-				Status:  "failed",
+				Status:  fail,
 			}.WriteJSON(w, http.StatusNotFound)
 
 			return
@@ -168,7 +172,7 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 
 		Response{
 			Message: "could not find url",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -176,7 +180,7 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 
 	Response{
 		Message: "success",
-		Status:  "ok",
+		Status:  ok,
 		Content: url,
 	}.WriteJSON(w, http.StatusOK)
 }
@@ -186,7 +190,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 	if shortUrlString == "" {
 		Response{
 			Message: "invalid json request",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -197,7 +201,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, app.UrlNotFound) {
 			Response{
 				Message: "url not found",
-				Status:  "failed",
+				Status:  fail,
 			}.WriteJSON(w, http.StatusNotFound)
 
 			return
@@ -205,7 +209,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 
 		Response{
 			Message: "could not find url",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -214,7 +218,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 	if !exist {
 		Response{
 			Message: "short url does not exist",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -229,7 +233,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 	if err := decoder.Decode(&u); err != nil || u.Url == "" {
 		Response{
 			Message: "invalid json request",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -239,7 +243,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Response{
 			Message: "could not update url",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -247,7 +251,7 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 
 	Response{
 		Message: "success",
-		Status:  "ok",
+		Status:  ok,
 		Content: url,
 	}.WriteJSON(w, http.StatusOK)
 }
@@ -257,7 +261,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	if shortUrlString == "" {
 		Response{
 			Message: "invalid json request",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -268,7 +272,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, app.UrlNotFound) {
 			Response{
 				Message: "url not found",
-				Status:  "failed",
+				Status:  fail,
 			}.WriteJSON(w, http.StatusNotFound)
 
 			return
@@ -276,7 +280,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 
 		Response{
 			Message: "could not find url",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -285,7 +289,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	if !exist {
 		Response{
 			Message: "short url does not exist",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusBadRequest)
 
 		return
@@ -294,7 +298,7 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 	if err := c.db.DeleteURL(shortUrlString, c.ctx); err != nil {
 		Response{
 			Message: "could not delete the url",
-			Status:  "failed",
+			Status:  fail,
 		}.WriteJSON(w, http.StatusInternalServerError)
 
 		return
@@ -302,6 +306,6 @@ func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
 
 	Response{
 		Message: "success",
-		Status:  "ok",
+		Status:  ok,
 	}.WriteJSON(w, http.StatusNoContent)
 }
