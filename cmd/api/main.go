@@ -13,6 +13,7 @@ import (
 
 	"github.com/Alvesafk/shor/internal/app"
 	"github.com/Alvesafk/shor/internal/handlers"
+	"github.com/Alvesafk/shor/internal/middlewares"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
@@ -43,6 +44,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middlewares.RateLimiterMiddleware)
 
 	r.Get("/", conn.GetHelloWorld)
 
