@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -63,7 +62,7 @@ func (f FireDB) GetURLByShortCode(shortCode string, ctx context.Context) (*model
 	doc, err := f.Collection("urls").Doc(shortCode).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return nil, fmt.Errorf("not found")
+			return nil, UrlNotFound
 		}
 
 		return nil, err
