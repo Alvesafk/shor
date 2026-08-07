@@ -155,6 +155,15 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		Response{
+			Message: "method not allowed",
+			Status:  Fail,
+		}.WriteJSON(w, http.StatusMethodNotAllowed)
+
+		return
+
+	}
 	shortUrlString := r.PathValue("shortUrl")
 	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
 	if err != nil {
@@ -181,6 +190,16 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		Response{
+			Message: "method not allowed",
+			Status:  Fail,
+		}.WriteJSON(w, http.StatusMethodNotAllowed)
+
+		return
+
+	}
+
 	shortUrlString := r.PathValue("shortUrl")
 	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
 	if err != nil {
@@ -222,6 +241,15 @@ func (c Connection) UpdateURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c Connection) DeleteURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		Response{
+			Message: "method not allowed",
+			Status:  Fail,
+		}.WriteJSON(w, http.StatusMethodNotAllowed)
+
+		return
+	}
+
 	shortUrlString := r.PathValue("shortUrl")
 	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
 	if err != nil {
