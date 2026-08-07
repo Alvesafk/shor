@@ -108,6 +108,10 @@ func (c Connection) PostURL(w http.ResponseWriter, r *http.Request) {
 	for {
 		exist, err := c.db.ShortURLExists(shortCode, r.Context())
 		if err != nil {
+			if errors.Is(err, app.UrlNotFound) {
+				break
+			}
+
 			Response{
 				Message: "error on checking short code",
 				Status:  fail,
