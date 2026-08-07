@@ -58,8 +58,8 @@ func RateLimiterMiddleware(next http.Handler) http.Handler {
 			mu.Unlock()
 
 			handlers.Response{
-				Status:  "Failed",
-				Message: "Api is at capacity, try again later",
+				Message: "api is at capacity, try again later",
+				Status:  handlers.Fail,
 			}.WriteJSON(w, http.StatusTooManyRequests)
 
 			return
