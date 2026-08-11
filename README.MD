@@ -15,7 +15,7 @@ r.Post("/shor", conn.PostURL)
 r.Get("/shor/{shortUrl}", conn.GetURL)
 
 // Get the URL struct.
-r.Get("/shor/{shortUrl}/stats", conn.GetURL)
+r.Get("/shor/{shortUrl}/stats", conn.GetURLStats)
 
 // Put updates the URL struct with a new long URL sent via JSON.
 r.Put("/shor/{shortUrl}", conn.UpdateURL)
