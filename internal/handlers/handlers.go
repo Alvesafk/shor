@@ -186,6 +186,37 @@ func (c Connection) GetURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.Redirect(w, r, url.URL, http.StatusOK)
+}
+
+func (c Connection) GetURLStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		Response{
+			Message: "method not allowed",
+			Status:  Fail,
+		}.WriteJSON(w, http.StatusMethodNotAllowed)
+
+		return
+
+	}
+	shortUrlString := r.PathValue("shortUrl")
+	res, code, err := ValidateShortURL(shortUrlString, c, r.Context())
+	if err != nil {
+		res.WriteJSON(w, code)
+
+		return
+	}
+
+	url, err := c.db.GetURLByShortCode(shortUrlString, r.Context())
+	if err != nil {
+		Response{
+			Message: "could not find url",
+			Status:  Fail,
+		}.WriteJSON(w, http.StatusInternalServerError)
+
+		return
+	}
+
 	Response{
 		Message: "success",
 		Status:  OK,
